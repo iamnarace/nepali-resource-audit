@@ -48,7 +48,8 @@ def markdown(summary: dict, entries: list[dict], meta: dict) -> str:
         L += ["", "## Link health (live check)", "", f"Checked {ls['checked']} URLs.", "",
               "| state | count |", "|---|---|"] + [f"| {k} | {v} |" for k, v in sorted(ls["states"].items())]
         L += ["", "`unverifiable` = the server refused automated access (401/403/405/429); this does NOT mean "
-                  "the link is dead. `dead` = HTTP 404/410."]
+                  "the link is dead. `dead` = HTTP 404/410. `blocked-by-policy` = refused by the safety policy "
+                  "(non-http(s), non-public address, unusual port, or unsafe redirect); it was NOT requested."]
     declared = [e for e in entries if "declared_license" in e]
     if declared:
         from collections import Counter

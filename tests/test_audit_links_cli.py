@@ -75,21 +75,22 @@ def server():
 
 
 def test_check_url_states(server):
-    states = {p: check_url(server + p, timeout=3)["state"]
+    states = {p: check_url(server + p, timeout=3, allow_private=True)["state"]
               for p in ("/ok", "/gone", "/blocked", "/boom", "/redir", "/nohead")}
     assert states == {"/ok": "ok", "/gone": "dead", "/blocked": "unverifiable", "/boom": "server-error",
                       "/redir": "ok", "/nohead": "ok"}
-    assert check_url("http://127.0.0.1:1/x", timeout=2)["state"] == "error"
+    assert check_url("http://127.0.0.1:1/x", timeout=2, allow_private=True)["state"] == "error"
 
 
 def test_blocked_is_never_reported_as_dead(server):
-    r = check_links([server + "/blocked", server + "/gone"], per_host_delay=0, workers=2)
+    r = check_links([server + "/blocked", server + "/gone"], per_host_delay=0, workers=2, allow_private=True)
     assert r[server + "/blocked"]["state"] == "unverifiable" and r[server + "/gone"]["state"] == "dead"
 
 
 def test_check_links_rate_limits_per_host(server):
     t = time.monotonic()
-    check_links([server + "/ok", server + "/gone", server + "/blocked"], per_host_delay=0.2, workers=3)
+    check_links([server + "/ok", server + "/gone", server + "/blocked"],
+                per_host_delay=0.2, workers=3, allow_private=True)
     assert time.monotonic() - t >= 0.35
 
 
@@ -135,7 +136,8 @@ def test_cli_live_check_flag_against_local_server(tmp_path, server):
     md.write_text(f"- [ok]({server}/ok)\n- [gone]({server}/gone)\n- [blocked]({server}/blocked)\n",
                   encoding="utf-8")
     out = tmp_path / "o"
-    assert main(["audit", "--source", f"L={md}", "--out", str(out), "--check-links", "--workers", "2"]) == 0
+    assert main(["audit", "--source", f"L={md}", "--out", str(out), "--check-links", "--workers", "2",
+                 "--allow-private-hosts"]) == 0
     report = (out / "report.md").read_text(encoding="utf-8")
     assert "Link check run: yes" in report and "| dead | 1 |" in report and "| unverifiable | 1 |" in report
 

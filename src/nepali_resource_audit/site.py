@@ -15,6 +15,8 @@ TEMPLATE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Nepali resource audit</title>
 <style>
 :root{--bg:#fbfaf7;--fg:#1c1b19;--muted:#5e5b55;--card:#fff;--line:#dcd8cf;--accent:#9b1c31;--ok:#1d6b3a;--warn:#8a5a00;
