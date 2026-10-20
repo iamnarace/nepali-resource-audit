@@ -44,7 +44,8 @@ def _audit(a) -> int:
     if a.check_links:
         urls = [e["url"] for e in entries]
         print(f"checking {len(urls)} links (rate-limited)...", file=sys.stderr)
-        apply_link_results(entries, check_links(urls, timeout=a.timeout, workers=a.workers))
+        apply_link_results(entries, check_links(urls, timeout=a.timeout, workers=a.workers,
+                                                allow_private=a.allow_private_hosts))
     if a.lookup_licenses:
         print("looking up declared licences (GitHub / Hugging Face)...", file=sys.stderr)
         apply_license_lookups(entries, {e["id"]: lookup_license(e["id"]) for e in entries})
@@ -79,6 +80,9 @@ def main(argv: list[str] | None = None) -> int:
     a_.add_argument("--check-links", action="store_true", help="live HTTP check (opt-in, rate-limited)")
     a_.add_argument("--lookup-licenses", action="store_true",
                     help="query GitHub / Hugging Face APIs for declared licences (opt-in)")
+    a_.add_argument("--allow-private-hosts", action="store_true",
+                    help="DISABLE the safety policy: also request loopback/private/link-local hosts and any port "
+                         "(only for lists you fully trust)")
     a_.add_argument("--timeout", type=float, default=10.0)
     a_.add_argument("--workers", type=int, default=8)
     a_.add_argument("--site", action="store_true", help="also write a static searchable site")

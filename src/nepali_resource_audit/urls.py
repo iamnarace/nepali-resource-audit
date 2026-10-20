@@ -65,14 +65,21 @@ def classify(canonical: str) -> str:
     return "other"
 
 
+_SAFE_SEG = re.compile(r"^[A-Za-z0-9_.-]+$")
+
+
+def _safe(*segs: str) -> bool:
+    return all(_SAFE_SEG.match(x) and x not in (".", "..") for x in segs)
+
+
 def lookup_target(canonical: str) -> tuple[str, str] | None:
     """(kind, id) for hosts whose licence can be looked up through a public API."""
     parts = canonical.split("/")
-    if parts[0] == "github.com" and len(parts) == 3:
+    if parts[0] == "github.com" and len(parts) == 3 and _safe(parts[1], parts[2]):
         return ("github", f"{parts[1]}/{parts[2]}")
     if parts[0] == "huggingface.co" and len(parts) > 1:
-        if parts[1] == "datasets" and len(parts) == 4:
+        if parts[1] == "datasets" and len(parts) == 4 and _safe(parts[2], parts[3]):
             return ("hf-dataset", f"{parts[2]}/{parts[3]}")
-        if parts[1] not in ("spaces",) and len(parts) == 3:
+        if parts[1] not in ("spaces",) and len(parts) == 3 and _safe(parts[1], parts[2]):
             return ("hf-model", f"{parts[1]}/{parts[2]}")
     return None

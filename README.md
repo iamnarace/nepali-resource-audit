@@ -22,7 +22,7 @@ there, from an offline run.)
 - Canonicalises URLs: GitHub/Hugging Face/Kaggle (old and new URL styles)/arXiv (abs/pdf/versions)/DOI, UTM removal.
 - Summary: unique resources, per-list counts, repeats inside a list, pairwise overlap, kinds, licence-hint coverage,
   conflicting hints.
-- **Opt-in** `--check-links`: HEAD→GET, redirects, per-host rate limit, polite User-Agent. Distinguishes `dead`
+- **Opt-in** `--check-links`: HEAD→GET, per-host rate limit, polite User-Agent, and a **safety policy** (below). Distinguishes `dead`
   (404/410) from `unverifiable` (401/403/405/429 — never reported as dead).
 - **Opt-in** `--lookup-licenses`: GitHub repository licence and Hugging Face dataset/model card licence, reported
   separately as "declared by the host".
@@ -53,9 +53,18 @@ Sample output on the bundled fixtures (invented example URLs): `9 mentions -> 5 
 |---|---|---|
 | ![desktop](docs/screenshots/site-desktop.png) | ![mobile](docs/screenshots/site-mobile.png) | ![dark](docs/screenshots/site-dark.png) |
 
+## Safety policy for `--check-links` (lists are untrusted input)
+A hostile list could link to `http://169.254.169.254/` (cloud metadata), `http://localhost:6379/` or an intranet host. By
+default the checker therefore **refuses** anything that is not http(s) on port 80/443 whose host resolves only to public
+addresses, re-validates every redirect hop, and uses an opener without `file:`/`ftp:`/`data:` handlers. Refused links are
+reported as `blocked-by-policy` and are not requested. `--allow-private-hosts` turns the address/port policy off (for lists
+you fully trust; the scheme restriction always applies). Limitations: the name is resolved once by the check and again by
+the HTTP stack (DNS-rebinding race), and an HTTP proxy resolves names itself — run audits where sensitive internal
+services are not reachable. The generated site carries a restrictive Content-Security-Policy.
+
 ## Development
 ```bash
-ruff check . && python -W error -m pytest -q      # 39 tests
+ruff check . && python -W error -m pytest -q      # 76 tests
 ```
 Tests include a local HTTP server for link-state logic (ok/404/403/500/redirect/HEAD-rejected) and a check that
 hostile strings in list data cannot break out of the page's data block. The live-internet paths (GitHub/Hugging Face
@@ -78,6 +87,11 @@ Layout: `src/nepali_resource_audit/{urls,extract,audit,links,report,site,cli}.py
 - GitHub merging is repository-level, so different subfolders of one repo count as one resource.
 - Kaggle licences are not looked up (no unauthenticated API). Google Drive/paywalled links are `unverifiable`.
 - No history/diff between runs yet.
+
+## Using it with the other projects
+Possible, not required: `nra` reads any Markdown, so it can audit a README that lists the sources of a
+[nepali-data-commons](https://github.com/iamnarace/nepali-data-commons) dataset or the datasets that
+[nepali-eval](https://github.com/iamnarace/nepali-eval) tasks were derived from. No code or dependency is shared.
 
 ## Roadmap
 GitHub token support (env var name, like nepali-eval), `nra diff` between runs, GitHub Action template that comments
